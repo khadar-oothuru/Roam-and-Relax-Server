@@ -50,8 +50,13 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Generate JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    // Generate JWT with username and profile image
+    const token = jwt.sign(
+      { id: user._id, username: user.username, profileImage: user.profileImage },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
     res.cookie("token", token, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
 
     res.status(200).json({ message: "Login successful", token });
@@ -60,7 +65,6 @@ const login = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
-
 // Get User Controller
 const getUser = async (req, res) => {
   try {
