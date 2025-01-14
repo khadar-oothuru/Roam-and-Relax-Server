@@ -84,7 +84,37 @@ const getUser = async (req, res) => {
 };
 
 
-// Make sure the Booking model is correctly imported
+
+const updateUser = async (req, res) => {
+  try {
+    const { username } = req.body;
+
+    // Find the user
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Update username if provided
+    if (username) {
+      user.username = username;
+    }
+
+    // Update profile image if a new file is provided
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, { folder: "profiles" });
+      user.profileImage = result.secure_url;
+    }
+
+    // Save updated user
+    await user.save();
+
+    res.status(200).json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Update user error:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
 
 
-module.exports = { signup, login, getUser };
+
+ 
+module.exports = { signup, login, getUser , updateUser}; 
