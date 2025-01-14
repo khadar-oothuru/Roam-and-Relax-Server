@@ -84,46 +84,74 @@ const getUser = async (req, res) => {
 };
 
 
-
 const updateUser = async (req, res) => {
   try {
     const { username } = req.body;
 
-    // Find the user
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    // Validate required fields
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Unauthorized: User not authenticated" });
+    }
 
-    // Update username if provided
-    if (username) {
-      user.username = username;
+    // Find the user by ID
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update username if provided and not empty
+    if (username && username.trim() !== "") {
+      user.username = username.trim();
     }
 
     // Update profile image if a new file is provided
     if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, { folder: "profiles" });
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "profiles",
+      });
       user.profileImage = result.secure_url;
     }
 
-    // Save updated user
+    // Save updated user information
     await user.save();
 
     // Generate a new JWT token with updated info
     const token = jwt.sign(
-      { id: user._id, username: user.username, profileImage: user.profileImage },
+      {
+        id: user._id,
+        username: user.username,
+        profileImage: user.profileImage,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    res.cookie("token", token, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+    // Set the token as an HTTP-only cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Ensure secure cookies in production
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: "strict",
+    });
 
-    res.status(200).json({ message: "Profile updated successfully", token });
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        username: user.username,
+        profileImage: user.profileImage,
+      },
+      token,
+    });
   } catch (error) {
-    console.error("Update user error:", error);
-    res.status(500).json({ message: "Server error", error });
+    console.error("Error updating user:", error.message);
+
+    res.status(500).json({
+      message: "An error occurred while updating the profile",
+      error: error.message,
+    });
   }
 };
-
-
 
  
 module.exports = { signup, login, getUser , updateUser}; 

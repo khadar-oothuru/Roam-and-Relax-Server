@@ -10,6 +10,6 @@ const router = express.Router();
 router.post("/signup", upload.single("profileImage"), signup);
 router.post("/login", login);
 router.get("/user", authMiddleware, getUser);
-router.put("/user/update", authMiddleware, upload.single("profileImage"), updateUser);
+router.put("/update", authMiddleware, upload.single("profileImage"), updateUser);
 
 module.exports = router;
