@@ -107,7 +107,16 @@ const updateUser = async (req, res) => {
     // Save updated user
     await user.save();
 
-    res.status(200).json({ message: "Profile updated successfully", user });
+    // Generate a new JWT token with updated info
+    const token = jwt.sign(
+      { id: user._id, username: user.username, profileImage: user.profileImage },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.cookie("token", token, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+
+    res.status(200).json({ message: "Profile updated successfully", token });
   } catch (error) {
     console.error("Update user error:", error);
     res.status(500).json({ message: "Server error", error });
