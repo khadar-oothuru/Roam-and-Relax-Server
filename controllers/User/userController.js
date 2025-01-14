@@ -1,4 +1,6 @@
 const User = require("../../model/userModel");
+
+const Booking = require("../../model/booking");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("../../config/cloudinaryConfig");
 const { userSignupValidation, userLoginValidation } = require("../../validations/userValidations");
@@ -66,6 +68,9 @@ const login = async (req, res) => {
   }
 };
 // Get User Controller
+
+
+
 const getUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -77,5 +82,9 @@ const getUser = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
+
+
+// Make sure the Booking model is correctly imported
+
 
 module.exports = { signup, login, getUser };
